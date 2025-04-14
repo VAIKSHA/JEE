@@ -1,10 +1,103 @@
 import { useState } from "react";
 
+const styles = {
+  container: {
+    maxWidth: "50%",
+    margin: "150px auto 50px",
+    padding: "20px",
+    borderRadius: "15px",
+    background: "linear-gradient(135deg, #f9f9f9, #e3e3e3)",
+    boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+  },
+  containerHover: {
+    transform: "scale(1.02)",
+    boxShadow: "0 15px 25px rgba(0, 0, 0, 0.3)",
+  },
+  heading: {
+    textAlign: "center",
+    fontWeight: "900",
+    fontStyle: "italic",
+    marginBottom: "20px",
+    fontSize: "2rem",
+    color: "rgb(53, 121, 256)",
+    textShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)",
+  },
+  formGroup: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    marginBottom: "20px",
+  },
+  input: {
+    width: "70%",
+    padding: "12px",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    fontSize: "1rem",
+    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+    marginBottom: "10px",
+  },
+  inputFocus: {
+    borderColor: "#007BFF",
+    boxShadow: "0 0 8px rgba(0, 123, 255, 0.5)",
+  },
+  select: {
+    width: "70%",
+    padding: "12px",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    fontSize: "1rem",
+    backgroundColor: "#fff",
+    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+  },
+  buttonContainer: {
+    textAlign: "center",
+    marginTop: "20px",
+  },
+  button: {
+    padding: "12px 25px",
+    backgroundColor: "#007BFF",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "1rem",
+    fontWeight: "bold",
+    transition: "background-color 0.3s ease, transform 0.2s ease",
+  },
+  buttonHover: {
+    backgroundColor: "#0056b3",
+    transform: "scale(1.05)",
+  },
+  error: {
+    marginTop: "20px",
+    padding: "10px",
+    backgroundColor: "#f8d7da",
+    borderRadius: "6px",
+    color: "#721c24",
+    border: "1px solid #f5c6cb",
+  },
+  result: {
+    margin: "20px auto",
+    maxWidth: "70%",
+    textAlign: "center",
+    padding: "15px",
+    backgroundColor: "#d4edda",
+    borderRadius: "6px",
+    color: "#155724",
+    border: "1px solid #c3e6cb",
+    transition: "all 0.3s ease",
+  },
+};
+
 function App() {
   const [marks, setMarks] = useState("");
   const [difficulty, setDifficulty] = useState("Easy");
   const [percentile, setPercentile] = useState("");
   const [rank, setRank] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleMarksChange = (e) => {
     const value = e.target.value;
@@ -14,6 +107,8 @@ function App() {
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
+    setError("");
     const data = { marks: parseInt(marks), difficulty };
 
     try {
@@ -33,176 +128,97 @@ function App() {
       setPercentile(result.percentile);
       setRank(result.rank);
     } catch (error) {
+      setError("Failed to fetch prediction. Please try again.");
       console.error("Error fetching prediction:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div
-      style={{
-        textAlign: "center",
-        fontFamily: "'Roboto', sans-serif",
-        backgroundColor: "rgb(253, 247, 239)",
-        padding: "20px",
-        borderRadius: "10px",
-        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-        maxWidth: "50%",
-        margin: "200px auto",
-        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+      style={styles.container}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = styles.containerHover.transform;
+        e.currentTarget.style.boxShadow = styles.containerHover.boxShadow;
       }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.transform = "scale(1.02)";
-        e.currentTarget.style.boxShadow = "0 6px 12px rgba(0, 0, 0, 0.15)";
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.transform = "scale(1)";
-        e.currentTarget.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)";
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = styles.container.boxShadow;
       }}
     >
-      <h1
-        style={{
-          color: "#4CAF50",
-          marginBottom: "20px",
-          fontWeight: "800",
-          fontStyle: "bold",
-          textShadow: "1px 1px 2px rgba(0, 0, 0, 0.2)",
-        }}
-      >
-        All India Rank Calculator
-      </h1>
+      <h1 style={styles.heading}>All India Rank Calculator</h1>
 
-      <h3
-  style={{
-    color: "#ffffff", // White text for contrast
-    backgroundColor: "#4CAF50", // Green background to highlight
-    padding: "10px 20px", // Padding for spacing
-    borderRadius: "8px", // Rounded corners
-    marginBottom: "20px",
-    fontWeight: "800", // Bold text
-    fontStyle: "italic", // Italicized text
-    textShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)", // Stronger shadow for depth
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)", // Subtle box shadow
-    display: "inline-block", // Inline-block for better alignment
-  }}
->
-  Predict Your All India Rank Here:
-</h3>
+      <h5 style={{ color: "#555", marginBottom: "20px", textAlign: "center" }}>
+        Predict Your All India Rank Here:
+      </h5>
 
-      <input
-        type="number"
-        placeholder="Enter marks (-60 to 300)"
-        value={marks}
-        onChange={handleMarksChange}
-        style={{
-          padding: "12px",
-          margin: "10px",
-          border: "1px solid #ccc",
-          borderRadius: "5px",
-          width: "90%",
-          maxWidth: "300px",
-          fontSize: "16px",
-          boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
-          transition: "border-color 0.3s ease",
-        }}
-        onFocus={(e) => (e.target.style.borderColor = "#4CAF50")}
-        onBlur={(e) => (e.target.style.borderColor = "#ccc")}
-      />
+      <div style={styles.formGroup}>
+        <input
+          type="number"
+          placeholder="Enter marks (-60 to 300)"
+          value={marks}
+          onChange={handleMarksChange}
+          style={styles.input}
+          onFocus={(e) => {
+            e.target.style.borderColor = styles.inputFocus.borderColor;
+            e.target.style.boxShadow = styles.inputFocus.boxShadow;
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "#ccc";
+            e.target.style.boxShadow = "none";
+          }}
+        />
 
-      <select
-        value={difficulty}
-        onChange={(e) => setDifficulty(e.target.value)}
-        style={{
-          padding: "12px",
-          margin: "10px",
-          border: "1px solid #ccc",
-          borderRadius: "5px",
-          width: "90%",
-          maxWidth: "320px",
-          fontSize: "16px",
-          backgroundColor: "#fff",
-          boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
-          transition: "border-color 0.3s ease",
-        }}
-        onFocus={(e) => (e.target.style.borderColor = "#4CAF50")}
-        onBlur={(e) => (e.target.style.borderColor = "#ccc")}
-      >
-        <option value="Easy">Hard</option>
-        <option value="Moderate">Moderate</option>
-        <option value="Hard">Easy</option>
-      </select>
-
-      <button
-        onClick={handleSubmit}
-        style={{
-          padding: "10px 30px", // Increased padding
-          margin: "20px 10px",
-          backgroundColor: "#4CAF50",
-          color: "white",
-          border: "none",
-          borderRadius: "8px", // Slightly larger border radius
-          cursor: "pointer",
-          fontSize: "20px", // Increased font size
-          fontWeight: "bold", // Added bold text
-          width: "640px", // Set a fixed width for consistency
-          transition: "background-color 0.3s ease, transform 0.2s ease",
-        }}
-        onMouseOver={(e) => {
-          e.target.style.backgroundColor = "#45a049";
-          e.target.style.transform = "scale(1.03)"; // Slightly larger scale on hover
-        }}
-        onMouseOut={(e) => {
-          e.target.style.backgroundColor = "#4CAF50";
-          e.target.style.transform = "scale(1)";
-        }}
-      >
-        Predict
-      </button>
-      <div
-        style={{
-          margin: "26px",
-          padding: "20px",
-          background: "radial-gradient(circle, #0f0f0f, #1a1a1a, #2a2a2a)", // Radial gradient for depth
-          borderRadius: "20px", // Smooth rounded corners
-          boxShadow: "0 8px 30px rgba(0, 255, 0, 0.3)", // Strong glowing shadow
-          border: "2px solid rgba(0, 255, 0, 0.6)", // Glowing green border
-          color: "#00ff00", // Bright green text for a digital look
-          fontFamily: "'Orbitron', sans-serif", // Futuristic font
-          textAlign: "center", // Centered content
-          textTransform: "uppercase", // Uppercase text for a digital feel
-          letterSpacing: "2px", // Spaced-out letters
-          transition: "transform 0.3s ease, box-shadow 0.3s ease", // Smooth hover transitions
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 255, 0, 0.6)"; // Brighter glow on hover
-          e.currentTarget.style.transform = "scale(1.05)"; // Slight zoom effect
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 255, 0, 0.3)";
-          e.currentTarget.style.transform = "scale(1)";
-        }}
-      >
-        <h3
-          style={{
-            color: "#00ff00", // Bright green text
-            marginBottom: "15px",
-            fontSize: "28px", // Larger font size for emphasis
-            fontWeight: "bold", // Bold text
-            textShadow: "0 0 10px rgba(0, 255, 0, 0.8)", // Strong glowing text effect
+        <select
+          value={difficulty}
+          onChange={(e) => setDifficulty(e.target.value)}
+          style={styles.select}
+          onFocus={(e) => {
+            e.target.style.borderColor = styles.inputFocus.borderColor;
+            e.target.style.boxShadow = styles.inputFocus.boxShadow;
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "#ccc";
+            e.target.style.boxShadow = "none";
           }}
         >
-          Percentile: <span>{percentile}</span>
-        </h3>
-        <h3
-          style={{
-            color: "#00ff00", // Bright green text
-            fontSize: "28px", // Larger font size for emphasis
-            fontWeight: "bold", // Bold text
-            textShadow: "0 0 10px rgba(0, 255, 0, 0.8)", // Strong glowing text effect
-          }}
-        >
-          All India Rank: <span>{rank}</span>
-        </h3>
+          <option value="Easy">Easy</option>
+          <option value="Moderate">Moderate</option>
+          <option value="Hard">Hard</option>
+        </select>
       </div>
+
+      <div style={styles.buttonContainer}>
+        <button
+          onClick={handleSubmit}
+          style={styles.button}
+          onMouseOver={(e) => {
+            e.target.style.backgroundColor = styles.buttonHover.backgroundColor;
+            e.target.style.transform = styles.buttonHover.transform;
+          }}
+          onMouseOut={(e) => {
+            e.target.style.backgroundColor = styles.button.backgroundColor;
+            e.target.style.transform = "none";
+          }}
+          disabled={loading}
+        >
+          {loading ? "Predicting..." : "Predict"}
+        </button>
+      </div>
+
+      {error && <div style={styles.error}>{error}</div>}
+
+      {percentile && rank && (
+        <div style={styles.result}>
+          <h3>
+            Percentile: <span>{percentile}</span>
+          </h3>
+          <h3>
+            All India Rank: <span>{rank}</span>
+          </h3>
+        </div>
+      )}
     </div>
   );
 }

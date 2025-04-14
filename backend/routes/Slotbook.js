@@ -1,46 +1,59 @@
-const express = require("express");
+// Slotbook.js
+// Handles slot booking POST request and sends confirmation emails
+
+const express = require('express');
+const nodemailer = require('nodemailer');
+const Slot = require('../models/Slot');
+require('dotenv').config();
+
 const router = express.Router();
-const nodemailer = require("nodemailer");
-require("dotenv").config();
 
-// Nodemailer transporter setup
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER, // Your email
-    pass: process.env.EMAIL_PASS, // Your email password or App Password
-  },
-});
+// Validate environment variables
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.ADMIN_EMAIL) {
+  throw new Error('Missing required environment variables: EMAIL_USER, EMAIL_PASS, or ADMIN_EMAIL');
+}
 
-router.post("/book-slot", async (req, res) => {
+// POST: /api/book-slot
+router.post('/book-slot', async (req, res) => {
   const { name, email, contact, date, hours, timeSlot } = req.body;
 
   if (!name || !email || !contact || !date || !hours || !timeSlot) {
-    return res.status(400).json({ success: false, message: "All fields are required" });
+    return res.status(400).json({ message: 'All fields are required.' });
   }
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const adminMailOptions = {
+    from: process.env.EMAIL_USER,
+    to: process.env.ADMIN_EMAIL,
+    subject: 'New Slot Booking Received',
+    text: `New Booking:\nName: ${name}\nEmail: ${email}\nContact: ${contact}\nDate: ${date}\nHours: ${hours}\nTime Slot: ${timeSlot}`,
+  };
+
+  const userMailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Slot Booking Confirmation',
+    text: `Dear ${name},\n\nYour booking is confirmed.\nDate: ${date}\nTime Slot: ${timeSlot}\nDuration: ${hours} hour(s)\n\nThank you!`,
+  };
 
   try {
-    // Email to the user
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Slot Booking Confirmation",
-      text: `Hello ${name},\n\nYour slot has been successfully booked!\n\nDetails:\nDate: ${date}\nTime: ${timeSlot}\nDuration: ${hours} hour(s)\n\nThank you for booking with us!`,
-    });
+    await transporter.sendMail(adminMailOptions);
+    await transporter.sendMail(userMailOptions);
 
-    // Email to admin
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: process.env.ADMIN_EMAIL, // Admin email from .env
-      subject: "New Slot Booking",
-      text: `A new slot has been booked:\n\nName: ${name}\nEmail: ${email}\nContact: ${contact}\nDate: ${date}\nTime: ${timeSlot}\nDuration: ${hours} hour(s)`,
-    });
+    const slot = new Slot({ name, email, contact, date, hours, timeSlot });
+    await slot.save();
 
-    res.status(200).json({ success: true, message: "Slot booked successfully and email sent!" });
-  }
-  catch (error) {
-    console.error("Error sending email:", error);
-    res.status(500).json({ success: false, message: "Error booking slot" });
+    return res.status(200).json({ message: 'Booking confirmed and emails sent.' });
+  } catch (error) {
+    console.error('Booking failed:', error);
+    return res.status(500).json({ message: 'Booking failed. Please try again.' });
   }
 });
 

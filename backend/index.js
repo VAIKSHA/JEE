@@ -3,10 +3,14 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const nodemailer = require("nodemailer");
 const mongoDB = require("./db");
-const Slot = require("./models/Slot");
 
 // Load environment variables
 dotenv.config();
+
+// Validate required environment variables
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.ADMIN_EMAIL) {
+    throw new Error('Missing required environment variables: EMAIL_USER, EMAIL_PASS, or ADMIN_EMAIL');
+}
 
 // Initialize Express app
 const app = express();
@@ -15,9 +19,9 @@ const port = 4000;
 // Connect to MongoDB
 mongoDB();
 
-// CORS Configuration (Allow frontend at `http://localhost:3000`)
+// CORS Configuration (Allow frontend at `http://localhost:3000` and production domain)
 const corsOptions = {
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", ""], // Add your production domain here
     methods: "GET, POST, PUT, DELETE, PATCH, HEAD",
     credentials: true,
 };
@@ -40,48 +44,12 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// ✅ Slot Booking Route
-app.post('/api/book-slot', async (req, res) => {
-    try {
-        const { name, email, contact, date, hours, timeSlot } = req.body;
-
-        if (!name || !email || !contact || !date || !hours || !timeSlot) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        // Save slot to MongoDB
-        const newSlot = new Slot({ name, email, contact, date, hours, timeSlot });
-        await newSlot.save();
-
-        // Send confirmation email to user
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'Slot Booking Confirmation',
-            text: `Hello ${name},\n\nYour slot has been booked successfully!\n\nDate: ${date}\nTime: ${timeSlot}\nDuration: ${hours} hour(s)\n\nThank you!`,
-        });
-
-        // Send notification to admin
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: process.env.ADMIN_EMAIL,
-            subject: 'New Slot Booking',
-            text: `New slot booked:\n\nName: ${name}\nEmail: ${email}\nContact: ${contact}\nDate: ${date}\nTime: ${timeSlot}\nDuration: ${hours} hour(s)`,
-        });
-
-        res.status(200).json({ message: 'Slot booked successfully and email sent!' });
-    } catch (error) {
-        console.error("Error booking slot:", error);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
-});
-
 // Global error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).json({
+    console.error(err.stack);
+    res.status(err.status || 500).json({
         success: false,
-        error: "Internal server error!",
+        error: err.message || "Internal server error!",
     });
 });
 
