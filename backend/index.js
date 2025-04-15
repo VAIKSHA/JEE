@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const nodemailer = require("nodemailer");
 const mongoDB = require("./db");
 
 // Load environment variables
@@ -21,7 +20,7 @@ mongoDB();
 
 // CORS Configuration (Allow frontend at `http://localhost:3000` and production domain)
 const corsOptions = {
-    origin: ["http://localhost:3000", ""], // Add your production domain here
+    origin: process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000"],
     methods: "GET, POST, PUT, DELETE, PATCH, HEAD",
     credentials: true,
 };
@@ -35,14 +34,6 @@ app.use('/api', require("./routes/CreateUser"));
 app.use('/api', require("./routes/LoginUser"));
 app.use('/api', require("./routes/Slotbook"));
 
-// Nodemailer transporter setup
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER, // Your email
-        pass: process.env.EMAIL_PASS, // Your email password or App Password
-    },
-});
 
 // Global error handling middleware
 app.use((err, req, res, next) => {

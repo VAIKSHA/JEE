@@ -4,6 +4,7 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const Slot = require('../models/Slot');
+const transporter = require("../utils/transporter");
 require('dotenv').config();
 
 const router = express.Router();
@@ -21,13 +22,11 @@ router.post('/book-slot', async (req, res) => {
     return res.status(400).json({ message: 'All fields are required.' });
   }
 
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  // 🛑 Check for existing booking
+  const existing = await Slot.findOne({ email, date, timeSlot });
+  if (existing) {
+    return res.status(400).json({ message: "You have already booked this time slot." });
+  }
 
   const adminMailOptions = {
     from: process.env.EMAIL_USER,
@@ -51,10 +50,14 @@ router.post('/book-slot', async (req, res) => {
     await slot.save();
 
     return res.status(200).json({ message: 'Booking confirmed and emails sent.' });
-  } catch (error) {
-    console.error('Booking failed:', error);
-    return res.status(500).json({ message: 'Booking failed. Please try again.' });
-  }
+  } 
+  catch (error) {
+    console.error('Booking failed:', error); 
+    return res.status(500).json({ 
+      message: 'Booking failed. Please try again later.',
+      error: error.message
+    });
+  }  
 });
 
 module.exports = router;
