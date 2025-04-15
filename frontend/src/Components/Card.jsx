@@ -2,9 +2,9 @@ import React from 'react';
 
 export default function Card() {
     const cards = [
-        { title: "PHYSICS", playlist: "PLfxfHjBUmodb65WvNU9iA8ofR-WybOHpg&si=JCnRHyhft19fYM_H" },
-        { title: "CHEMISTRY", playlist: "PLfxfHjBUmodb65WvNU9iA8ofR-WybOHpg&si=JCnRHyhft19fYM_H" },
-        { title: "MATHS", playlist: "PLfxfHjBUmodb65WvNU9iA8ofR-WybOHpg&si=JCnRHyhft19fYM_H" },
+        { title: "PHYSICS", videoId: "_lLwOvc0j70" }, 
+        { title: "CHEMISTRY", videoId: "kwG6zR-Gvso" }, 
+        { title: "MATHS", videoId: "I3O9dzuHZw8" }, 
     ];
 
     return (
@@ -37,9 +37,8 @@ export default function Card() {
                             </h5>
                             <iframe
                                 style={{ border: 'none', borderRadius: '10px', width: '100%', height: '230px' }}
-                                src={`https://www.youtube.com/embed/${card.playlist}`}
-                                title={`${card.title} Playlist`}
-                                frameBorder="2"
+                                src={`https://www.youtube.com/embed/${card.videoId}`}
+                                title={`${card.title} Video`}
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
                             ></iframe>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import emailjs from '@emailjs/browser';
 const styles = {
     heading: {
         textAlign: 'center',
@@ -115,6 +115,10 @@ const Contact = () => {
         message: '',
     });
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+
     const handleChange = ({ target: { name, value } }) => {
         setFormData((prevData) => ({
             ...prevData,
@@ -124,8 +128,29 @@ const Contact = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
-        setFormData({ name: '', email: '', message: '' });
+        setIsSubmitting(true);
+        setSuccessMessage('');
+        setErrorMessage('');
+
+        // Replace these with your EmailJS service ID, template ID, and public key
+        const serviceID = 'service_7tqzhqv';
+        const templateID = 'template_plu8d3l';
+        const publicKey = 'ge83WatZJoqk-46rg';
+
+        emailjs
+            .send(serviceID, templateID, formData, publicKey)
+            .then((response) => {
+                console.log('Email sent successfully:', response);
+                setSuccessMessage('Your message has been sent successfully!');
+                setFormData({ name: '', email: '', message: '' });
+            })
+            .catch((error) => {
+                console.error('Failed to send email:', error);
+                setErrorMessage('Failed to send your message. Please try again later.');
+            })
+            .finally(() => {
+                setIsSubmitting(false);
+            });
     };
 
     return (
@@ -195,6 +220,7 @@ const Contact = () => {
                     <button
                         type="submit"
                         style={styles.button}
+                        disabled={isSubmitting}
                         onMouseOver={(e) => {
                             e.target.style.backgroundColor = styles.buttonHover.backgroundColor;
                             e.target.style.transform = styles.buttonHover.transform;
@@ -204,10 +230,12 @@ const Contact = () => {
                             e.target.style.transform = 'none';
                         }}
                     >
-                        Submit
+                        {isSubmitting ? 'Sending...' : 'Submit'}
                     </button>
                 </div>
             </form>
+            {successMessage && <p style={{ color: 'green', textAlign: 'center' }}>{successMessage}</p>}
+            {errorMessage && <p style={{ color: 'red', textAlign: 'center' }}>{errorMessage}</p>}
         </div>
     );
 };
